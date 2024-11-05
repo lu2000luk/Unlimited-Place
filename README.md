@@ -1,38 +1,28 @@
-# sv
+# Unlimited r/Place
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+This my recreation of r/Place but it has virtually unlimited slots.
 
-## Creating a project
+## How does this work?
 
-If you're seeing this, you've probably already done this step. Congrats!
+Your client get sent different packets from the Websocket server:
 
-```bash
-# create a new project in the current directory
-npx sv create
+GET PIXELS:
+    Retrurns a 8x8 grid of pixels at the asked offset (x or y divided by 8)
 
-# create a new project in my-app
-npx sv create my-app
-```
+SET PIXEL:
+    Changes the color of certain pixels given their x and y position (Limited to 1 packet per 50ms)
 
-## Developing
+LISTEN ZONE:
+    Lets the client recieve the pixel placement events in a specific 8x8 pixel zone given its offset (x or y divided by 8)
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+UNLISTEN ZONE:
+    Stops recieving a zone specific events
 
-```bash
-npm run dev
+## The DB and the Server
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+DB: Redis
+Server: *Just* a websocket server
 
-## Building
+## How do i selfhost
 
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+You don't, its still in development.
