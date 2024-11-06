@@ -1,8 +1,11 @@
 <script>
-	import { browser } from "$app/environment";
+    // @ts-nocheck
+    import { browser } from "$app/environment";
     import { io } from "socket.io-client";
-	import { get } from "svelte/store";
+    import { get } from "svelte/store";
     import Zone from "$lib/zone.svelte";
+    import { onMount, onDestroy, mount } from 'svelte';
+    import { writable } from 'svelte/store';
 
     const backendUrl = "http://localhost:3000";
 
@@ -84,9 +87,82 @@
         return new Array(8).fill(null).map(() => new Array(8).fill(null));
     }
 
-    let pos = $state({ x: 0, y: 0 });
+    let pos = $state({ x: 50, y: 50 });
+    let canvas = $state();
+    let zones = $state({});
 
+    function addArea({ zoneX, zoneY }) {
+        if (!browser) {
+            return;
+        }
 
+        let offset = { x: zoneX * 400, y: zoneY * 400 };
+
+        let zone = mount(Zone, {
+            target: canvas,
+            props: {
+                pixels: getEmptyArea(),
+                offset,
+                pos,
+                zone: { x: zoneX, y: zoneY }
+            },
+        });
+
+        zones[`${zoneX}_${zoneY}`] = zone;
+    }
+
+    function deleteArea({ zoneX, zoneY }) {
+        if (!browser) {
+            return;
+        }
+
+        let zone = zones[`${zoneX}_${zoneY}`];
+        if (zone) {
+            zone.$destroy();
+            delete zones[`${zoneX}_${zoneY}`];
+        }
+    }
+
+    onMount(() => {
+        addArea({ zoneX: 2, zoneY: 1 });
+        addArea({ zoneX: 2, zoneY: 2 });
+    });
+
+    let createdZones = 0;
+
+    function checkAndAddNewZones() {
+        if (!browser) return;
+
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Calculate visible zone ranges based on position
+        const minZoneX = Math.floor((pos.x - viewportWidth) / 400);
+        const maxZoneX = Math.ceil((pos.x + viewportWidth) / 400);
+        const minZoneY = Math.floor((pos.y - viewportHeight) / 400);
+        const maxZoneY = Math.ceil((pos.y + viewportHeight) / 400);
+
+        // Create new zones in visible range
+        for (let x = minZoneX; x <= maxZoneX; x++) {
+            for (let y = minZoneY; y <= maxZoneY; y++) {
+                const zoneElement = canvas?.querySelector(`#zone-${x}-${y}`);
+                if (!zoneElement) {
+                    createdZones++;
+                    addArea({ zoneX: x, zoneY: y });
+                }
+            }
+        }
+    }
+
+    $effect(() => {
+        checkAndAddNewZones();
+    });
+
+    $effect(() => {
+        if (pos.x || pos.y) {
+            checkAndAddNewZones();
+        }
+    });
 </script>
 
 <style>
@@ -101,14 +177,19 @@
     <button class="rounded-lg bg-gray-500 status-btn p-3 hover:bg-gray-600 transition-all text-white dev-only" onclick={getStatus}>Get status</button>
 </div>
 
-<div class="canvas z-10" role="application" ondrag={(event) => {
+<div class="canvas z-10" role="application" bind:this={canvas} ondrag={(event) => {
     if (event.clientX === 0 && event.clientY === 0) {
         return;
     }
 
-    pos.x = event.clientX;
-    pos.y = event.clientY;
+    console.log(event)
+
+    pos.x = pos.x + event.offsetX;
+    pos.y = pos.y + event.offsetY;
     console.log("X: ", pos.x, "Y: ", pos.y);
 }}>
-    <Zone pixels={getEmptyArea()} bind:pos={pos} />
+    <Zone pixels={getEmptyArea()} pos={pos} zone={{ x: 0, y: 0 }} />
+    <Zone pixels={getEmptyArea()} pos={pos} offset={{x: 400, y: 0}} zone={{ x: 1, y: 0 }} />
+    <!-- New zones here -->
+    
 </div>
