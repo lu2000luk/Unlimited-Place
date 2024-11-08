@@ -4,7 +4,7 @@
     import { io } from "socket.io-client";
     import { get } from "svelte/store";
     import Zone from "$lib/zone.svelte";
-    import { onMount, onDestroy, mount } from 'svelte';
+    import { onMount, onDestroy, mount, unmount } from 'svelte';
     import { writable } from 'svelte/store';
 
     const backendUrl = "http://localhost:3000";
@@ -89,12 +89,14 @@
 
     let pos = $state({ x: 50, y: 50 });
     let canvas = $state();
-    let zones = $state({});
+    let zones = {};
 
     function addArea({ zoneX, zoneY }) {
         if (!browser) {
             return;
         }
+
+        console.log("Adding zone: ", zoneX, zoneY);
 
         let offset = { x: zoneX * 400, y: zoneY * 400 };
 
@@ -116,9 +118,12 @@
             return;
         }
 
+        console.log("Deleting zone: ", zoneX, zoneY);
+
         let zone = zones[`${zoneX}_${zoneY}`];
+
         if (zone) {
-            zone.$destroy();
+            unmount(zone);
             delete zones[`${zoneX}_${zoneY}`];
         }
     }
@@ -130,23 +135,38 @@
 
     let createdZones = 0;
 
-    function checkAndAddNewZones() {
+    function checkAndManageZones() {
         if (!browser) return;
 
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-        
+
         // Calculate visible zone ranges based on position
         const minZoneX = Math.floor((pos.x - viewportWidth) / 400);
         const maxZoneX = Math.ceil((pos.x + viewportWidth) / 400);
         const minZoneY = Math.floor((pos.y - viewportHeight) / 400);
         const maxZoneY = Math.ceil((pos.y + viewportHeight) / 400);
 
+        console.log("Visible zones: ", minZoneX, maxZoneX, minZoneY, maxZoneY);
+        console.log("Positions: ", pos.x, pos.y);
+        console.log("Viewport: ", viewportWidth, viewportHeight);
+        console.log("Created zones: ", createdZones);
+        console.log("Zones: ", zones);
+
+        // Remove zones that are out of view
+        Object.keys(zones).forEach(key => {
+            const [zoneX, zoneY] = key.split('_').map(Number);
+            if (zoneX < minZoneX || zoneX > maxZoneX || 
+                zoneY < minZoneY || zoneY > maxZoneY) {
+                deleteArea({ zoneX, zoneY });
+                createdZones--;
+            }
+        });
+
         // Create new zones in visible range
         for (let x = minZoneX; x <= maxZoneX; x++) {
             for (let y = minZoneY; y <= maxZoneY; y++) {
-                const zoneElement = canvas?.querySelector(`#zone-${x}-${y}`);
-                if (!zoneElement) {
+                if (!zones[`${x}_${y}`]) {
                     createdZones++;
                     addArea({ zoneX: x, zoneY: y });
                 }
@@ -155,14 +175,34 @@
     }
 
     $effect(() => {
-        checkAndAddNewZones();
+        checkAndManageZones();
     });
 
     $effect(() => {
         if (pos.x || pos.y) {
-            checkAndAddNewZones();
+            checkAndManageZones();
         }
     });
+
+    $effect(() => {
+
+        window.onscroll = (event) => {
+            // Lower the scale of the .canvas
+            console.log(event);
+
+            let scale = 1 - window.scrollY / 100;
+            scale = Math.max(0.2, Math.min(2.0, scale));
+            canvas.style.transform = `scale(${scale})`;
+
+            checkAndManageZones();
+        };
+
+        return () => {
+            window.onscroll = null;
+        };
+    })
+
+
 </script>
 
 <style>
@@ -177,17 +217,15 @@
     <button class="rounded-lg bg-gray-500 status-btn p-3 hover:bg-gray-600 transition-all text-white dev-only" onclick={getStatus}>Get status</button>
 </div>
 
-<div class="canvas z-10" role="application" bind:this={canvas} ondrag={(event) => {
+<div class="canvas z-10 w-full h-full" role="application" bind:this={canvas} onmousemove={(event) => {
     if (event.clientX === 0 && event.clientY === 0) {
         return;
     }
 
-    console.log(event)
-
-    pos.x = pos.x + event.offsetX;
-    pos.y = pos.y + event.offsetY;
-    console.log("X: ", pos.x, "Y: ", pos.y);
+    pos.x = pos.x + event.movementX;
+    pos.y = pos.y + event.movementY;
 }}>
+
     <Zone pixels={getEmptyArea()} pos={pos} zone={{ x: 0, y: 0 }} />
     <Zone pixels={getEmptyArea()} pos={pos} offset={{x: 400, y: 0}} zone={{ x: 1, y: 0 }} />
     <!-- New zones here -->
