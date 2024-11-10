@@ -10,6 +10,13 @@
     data-x={zone.x}
     data-y={zone.y}
     >
+
+    <div class="w-full h-full absolute">
+        <div class="w-full h-full flex justify-center items-center">
+            <div class="text-2xl font-bold">{zone.x}, {zone.y}</div>
+        </div>
+    </div>
+
     {#each pixels.flat() as pixel}
         {#if pixel !== null}
             <div class="pixel" 
