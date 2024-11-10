@@ -10,6 +10,14 @@
 
     const backendUrl = "http://localhost:3000";
 
+    let viewportWidth = 0;
+    let viewportHeight = 0;
+
+    if (browser) {
+        viewportWidth = window.innerWidth;
+        viewportHeight = window.innerHeight;
+    }
+
     $effect(() => {
         const socket = io(backendUrl);
 
@@ -106,7 +114,7 @@
             props: {
                 pixels: getEmptyArea(),
                 offset,
-                pos,
+                pos: pos,
                 zone: { x: zoneX, y: zoneY }
             },
         });
@@ -134,14 +142,11 @@
     function checkAndManageZones() {
         if (!browser) return;
 
-        let viewportWidth = window.innerWidth;
-        let viewportHeight = window.innerHeight;
-
         // Calculate visible zone ranges based on position
-        let minZoneX = Math.floor((pos.x - viewportWidth) / 400) - 1;
-        let maxZoneX = Math.ceil((pos.x + viewportWidth) / 400) + 1;
-        let minZoneY = Math.floor((pos.y - viewportHeight) / 400) - 1;
-        let maxZoneY = Math.ceil((pos.y + viewportHeight) / 400) + 1;
+        let minZoneX = Math.floor(((pos.x * -1) - viewportWidth) / 400) - 1;
+        let maxZoneX = Math.ceil(((pos.x * -1) + viewportWidth) / 400) + 1;
+        let minZoneY = Math.floor(((pos.y * -1) - viewportHeight) / 400) - 1;
+        let maxZoneY = Math.ceil(((pos.y * -1) + viewportHeight) / 400) + 1;
 
         console.clear();
 
@@ -165,8 +170,8 @@
             const [zoneX, zoneY] = key.split('_').map(Number);
             if (zoneX < minZoneX || zoneX > maxZoneX || 
                 zoneY < minZoneY || zoneY > maxZoneY) {
-                //deleteArea({ zoneX, zoneY });
-                //createdZones--;
+                deleteArea({ zoneX, zoneY });
+                createdZones--;
             }
         });
 
@@ -217,6 +222,10 @@
 
     let mousePosition = $state({ x: 0, y: 0 });
     let hoveringOnZone = $state({ x: 0, y: 0 });
+    let viewport = $state({ width: 0, height: 0 });
+    if (browser) {
+        viewport = { width: viewportWidth, height: viewportHeight };
+    }
 </script>
 
 <style>
@@ -238,6 +247,7 @@
         <p>Grid position: {JSON.stringify(pos)}</p>
         <p>Mouse position: {JSON.stringify(mousePosition)}</p>
         <p>Hovering on zone: {JSON.stringify(hoveringOnZone)}</p>
+        <p>Viewport: {JSON.stringify(viewport)}</p>
     </div>
 </div>
 
