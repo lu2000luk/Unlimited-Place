@@ -5,19 +5,21 @@
 </script>
 
 <div class="absolute zone zone-{zone.x}_{zone.y}" 
-    style="top: {pos.y + offset.y}px; left: {pos.x + offset.x}px; width: 400px; height: 400px; border: 1px solid black;" 
+    style="top: {pos.y + offset.y}px; left: {pos.x + offset.x}px; width: 400px; height: 400px;" 
     id="zone-{zone.x}-{zone.y}"
     data-x={zone.x}
     data-y={zone.y}
     >
 
     <div class="grid grid-cols-8 grid-rows-8">
-        {#each pixels as pixel_row}
-            {#each pixel_row as pixel}
+        {#each pixels as pixel_row, rowIndex}
+            {#each pixel_row as pixel, colIndex}
                 {#if pixel}
-                    <div class="pixel" 
-                        style="background-color: {pixel};">
-                    </div>
+                    <div    class="pixel absolute" 
+                            style=" background-color: {pixel};
+                                    top: {((colIndex) * 50)}px;
+                                    left: {((rowIndex) * 50)}px;
+                    "></div>
                 {/if}
             {/each}
         {/each}
