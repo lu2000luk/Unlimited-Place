@@ -41,73 +41,92 @@ io.on('connection', (socket) => {
     });
 
     socket.on('get_area', async (data) => {
-        let { x, y, zone } = data;
+        try {
+                let { x, y, zone } = data;
 
-        if (!zone) {
-            zone = true;
-            x = Math.floor(x / 8);
-            y = Math.floor(y / 8);
-        }
+            if (!zone) {
+                zone = true;
+                x = Math.floor(x / 8);
+                y = Math.floor(y / 8);
+            }
 
-        const key = `area:${x}:${y}`;
+            const key = `area:${x}:${y}`;
 
-        const area = await client.get(key);
+            const area = await client.get(key);
 
-        socket.join(`area_${x}_${y}`);
+            socket.join(`area_${x}_${y}`);
 
-        if (area) {
-            socket.emit('area', { x, y, area: JSON.parse(area) });
+            if (area) {
+                socket.emit('area_' + x + "_" + y, { x, y, area: JSON.parse(area) });
+                console.log(x," _ ",y,' area sent to ', socket.id);
+                return;
+            } else {
+                const area = new Array(8).fill(null).map(() => new Array(8).fill(null));
+
+                await client.set(key, JSON.stringify(area));
+
+                socket.emit('area_' + x + "_" + y, { x, y, area });
+            }
+        } catch (e) {
+            socket.emit('error', 'Invalid data');
             return;
-        } else {
-            const area = new Array(8).fill(null).map(() => new Array(8).fill(null));
-
-            await client.set(key, JSON.stringify(area));
-
-            socket.emit('area', { x, y, area });
         }
+        
     });
 
     socket.on('set_pixel', async (data) => {
-        const { x, y, color } = data;
+        try {
+            const { x, y, color } = data;
 
-        const areaKey = `area:${Math.floor(x / 8)}:${Math.floor(y / 8)}`;
+            const areaKey = `area:${Math.floor(x / 8)}:${Math.floor(y / 8)}`;
 
-        const area = JSON.parse(await client.get(areaKey));
+            const area = JSON.parse(await client.get(areaKey));
 
-        if (!area) {
-            socket.emit('error', 'Zone not found, render it first');
-            return;
+            if (!area) {
+                socket.emit('error', 'Zone not found, render it first');
+                return;
+            }
+
+            area[x % 8][y % 8] = color;
+
+            await client.set(areaKey, JSON.stringify(area));
+
+            io.to(`area_${Math.floor(x / 8)}_${Math.floor(y / 8)}`).emit('pixel_updated', { x, y, color });
+        } catch (e) {
+            socket.emit('error', 'Failed to set pixel');
         }
-
-        area[x % 8][y % 8] = color;
-
-        await client.set(areaKey, JSON.stringify(area));
-
-        io.to(`area_${Math.floor(x / 8)}_${Math.floor(y / 8)}`).emit('pixel_updated', { x, y, color });
     });
 
     socket.on('leave_area', (data) => {
-        let { x, y, zone } = data;
+        try {
+            let { x, y, zone } = data;
 
-        if (!zone) {
-            zone = true;
-            x = Math.floor(x / 8);
-            y = Math.floor(y / 8);
+            if (!zone) {
+                zone = true;
+                x = Math.floor(x / 8);
+                y = Math.floor(y / 8);
+            }
+
+            socket.leave(`area_${x}_${y}`);
+        } catch (e) {
+            socket.emit('error', 'Failed to leave area');
         }
-
-        socket.leave(`area_${x}_${y}`);
     });
 
     socket.on('join_area', (data) => {
-        let { x, y, zone } = data;
+        try {
+            let { x, y, zone } = data;
 
-        if (!zone) {
-            zone = true;
-            x = Math.floor(x / 8);
-            y = Math.floor(y / 8);
+            if (!zone) {
+                zone = true;
+                x = Math.floor(x / 8);
+                y = Math.floor(y / 8);
+            }
+
+            socket.join(`area_${x}_${y}`);
+        } catch (e) {
+            socket.emit('error', 'Failed to join area');
         }
-
-        socket.join(`area_${x}_${y}`);
     });
 });
 
