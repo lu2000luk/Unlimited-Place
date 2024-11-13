@@ -28,6 +28,8 @@
 
     let cursor = $state();
 
+    let selectedColor = $state("#000000");
+
 	onMount(async () => {
 		const socket = io(backendUrl);
 
@@ -219,7 +221,7 @@
                 clickFunctions = [];
                 clickFunctions.push(setPixel);
 
-                socket.emit('set_pixel', { x: pixelX + zoneX * 8, y: pixelY + zoneY * 8, color: "ff1100" });
+                socket.emit('set_pixel', { x: pixelX + zoneX * 8, y: pixelY + zoneY * 8, color: selectedColor.replaceAll("#", "") });
 
                 console.log('Pixel set at ', { x: pixelX + zoneX * 8, y: pixelY + zoneY * 8 }, ' in zone ', { x: zoneX, y: zoneY });
             }
@@ -306,14 +308,8 @@
 	}
 </script>
 
-<div class="toolbar z-50 flex items-center gap-2 rounded-lg bg-gray-800 p-8 text-white">
-	<button
-		class="status-btn dev-only rounded-lg bg-gray-500 p-3 text-white transition-all hover:bg-gray-600"
-		onclick={getStatus}>Get status</button
-	>
-	<div>
-		<p>Grid position: {JSON.stringify(pos)}</p>
-	</div>
+<div class="toolbar z-50 flex items-center gap-2 rounded-lg bg-gray-800 bg-opacity-35 backdrop-blur-sm border-2 p-2 text-white" style="border-color: {selectedColor};">
+    <input type="color" class="rounded w-10 h-10 p-0 m-0 outline-none" bind:value={selectedColor} />
 </div>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -356,7 +352,6 @@
 <style>
 	.toolbar {
 		margin: 25px;
-		width: calc(100% - 50px);
 		position: fixed;
 	}
 </style>

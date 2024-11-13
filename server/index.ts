@@ -19,7 +19,7 @@ const io = new Server(server, {
     }
   });
 const client = createClient({
-    url: 'redis://localhost:32768'
+    url: 'redis://localhost:32770'
 });
 
 app.use(cors());
@@ -42,7 +42,7 @@ io.on('connection', (socket) => {
 
     socket.on('get_area', async (data) => {
         try {
-                let { x, y, zone } = data;
+            let { x, y, zone } = data;
 
             if (!zone) {
                 zone = true;
@@ -84,17 +84,36 @@ io.on('connection', (socket) => {
                 return;
             }
 
-
             const areaKey = `area:${Math.floor(x / 8)}:${Math.floor(y / 8)}`;
 
             const area = JSON.parse(await client.get(areaKey));
 
-            if (!area) {
-                socket.emit('error', 'Zone not found, render it first');
+            if (area && Array.isArray(area) && area[x % 8] && Array.isArray(area[x % 8])) {
+                area[x % 8][y % 8] = color;
+            } else {
+                if (!area) {
+                    socket.emit('error', 'Area is null');
+                    return;
+                }
+
+                if (!Array.isArray(area)) {
+                    socket.emit('error', 'Area is not an array');
+                    return;
+                }
+
+                if (!area[x % 8]) {
+                    socket.emit('error', 'Area x is null');
+                    return;
+                }
+
+                if (!Array.isArray(area[x % 8])) {
+                    socket.emit('error', 'Area x is not an array');
+                    return;
+                }
+
+                socket.emit('error', 'Unknown error while setting pixel | Data: ' + JSON.stringify(data));
                 return;
             }
-
-            area[x % 8][y % 8] = color;
 
             await client.set(areaKey, JSON.stringify(area));
 
@@ -102,7 +121,8 @@ io.on('connection', (socket) => {
 
             io.to(`area_${Math.floor(x / 8)}_${Math.floor(y / 8)}`).emit('pixel_updated', { x, y, color });
         } catch (e) {
-            socket.emit('error', 'Failed to set pixel');
+            socket.emit('error', 'Failed to set pixel: ' + e + " | Data: " + JSON.stringify(data));
+            console.error(e);
         }
     });
 

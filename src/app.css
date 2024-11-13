@@ -19,4 +19,13 @@ html, body {
     height: 50px;
     background-color: rgba(0, 0, 0, 0.5);
     position: absolute;
+    border: 1px solid white;
+}
+
+*::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+*::-webkit-color-swatch {
+    border: none;
 }

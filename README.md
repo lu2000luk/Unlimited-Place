@@ -20,7 +20,7 @@ UNLISTEN ZONE:
 
 ## The DB and the Server
 
-DB: Redis on localhost port 32768 (Docker Hub: redis/redis-stack-server)
+DB: Redis on localhost port 32770 (Docker Hub: redis/redis-stack-server)
 Server: *Just* a websocket server
 
 ## How do i selfhost
