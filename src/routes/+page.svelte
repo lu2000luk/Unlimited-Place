@@ -24,6 +24,10 @@
 	let zones = {};
     let zonePixels = $state({});
 
+    let clickFunctions = [];
+
+    let cursor = $state();
+
 	onMount(async () => {
 		const socket = io(backendUrl);
 
@@ -75,6 +79,19 @@
 			console.log('Ping from server');
 		});
 
+        socket.on("pixel_updated", (data) => {
+            console.log('Pixel updated at ', data);
+
+            let tryPixelElement = document.querySelector(`#pixel-${data.x}-${data.y}`);
+
+            if (tryPixelElement) {
+                tryPixelElement.style.backgroundColor = `#${data.color}`;
+            } else {
+                deleteArea({ zoneX: Math.floor(data.x / 8), zoneY: Math.floor(data.y / 8) });
+                addArea({ zoneX: Math.floor(data.x / 8), zoneY: Math.floor(data.y / 8) });
+            }
+        });
+
 		function getEmptyArea() {
 			return new Array(8).fill(null).map(() => new Array(8).fill(null));
 		}
@@ -87,6 +104,8 @@
             if (zones[`${zoneX}_${zoneY}`]) {
                 return;
             }
+
+            console.log('Requesting zone data for ', { x: zoneX, y: zoneY });
 
             socket.emit('get_area', { x: zoneX, y: zoneY, zone: true });
 
@@ -120,6 +139,8 @@
 
 			let offset = { x: zoneX * 400, y: zoneY * 400 };
 
+            console.log('Creating zone ', { x: zoneX, y: zoneY });
+
 			let zone = mount(Zone, {
 				target: canvas,
 				props: {
@@ -146,6 +167,8 @@
             }
 
 			if (zone) {
+                socket.emit('leave_area', { x: zoneX, y: zoneY, zone: true });
+
 				unmount(zone);
 				delete zones[`${zoneX}_${zoneY}`];
                 delete zonePixels[`${zoneX}_${zoneY}`];
@@ -181,6 +204,27 @@
 					}
 				}
 			}
+
+            async function setPixel() {
+                // Calculate the zone and pixel where the cursor element is
+
+                let zoneX = Math.floor((pos.x * -1 + cursor.offsetLeft) / 400);
+                let zoneY = Math.floor((pos.y * -1 + cursor.offsetTop) / 400);
+
+                let pixelX = Math.floor((pos.x * -1 + cursor.offsetLeft) % 400 / 50);
+                let pixelY = Math.floor((pos.y * -1 + cursor.offsetTop) % 400 / 50);
+
+                console.log('Cursor is at zone ', { x: zoneX, y: zoneY }, ' and pixel ', { x: pixelX, y: pixelY });
+
+                clickFunctions = [];
+                clickFunctions.push(setPixel);
+
+                socket.emit('set_pixel', { x: pixelX + zoneX * 8, y: pixelY + zoneY * 8, color: "ff1100" });
+
+                console.log('Pixel set at ', { x: pixelX + zoneX * 8, y: pixelY + zoneY * 8 }, ' in zone ', { x: zoneX, y: zoneY });
+            }
+
+            clickFunctions.push(setPixel);
 		}
 
 		checkAndManageZones();
@@ -194,6 +238,8 @@
         onDestroy(() => {
             socket.disconnect();
             socket.offAny();
+
+            clickFunctions = [];
         });
 	});
 
@@ -244,13 +290,19 @@
 	//});
 
 	let mouseDown = false;
+    let mouseDownSince = 0;
 
 	function onmousedown(event) {
 		mouseDown = true;
+        mouseDownSince = Date.now();
 	}
 
 	function onmouseup(event) {
 		mouseDown = false;
+        if (Date.now() - mouseDownSince < 400) {
+            console.log('Click');
+            clickFunctions.forEach((func) => func());
+        }
 	}
 </script>
 
@@ -266,17 +318,31 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
-	class="canvas z-10 h-full w-full"
+	class="canvas z-10 h-full w-full cursor-none"
 	role="application"
 	bind:this={canvas}
 	{onmousedown}
 	{onmouseup}
 	onmousemove={(event) => {
+        if (mouseDown) {
+            cursor.style.display = 'none';
+        }
+
+        let gridX = Math.floor(event.clientX / 50) * 50;
+        let gridY = Math.floor(event.clientY / 50) * 50;
+
+        let plusOffsetx = gridX + pos.x % 50;
+        let plusOffsety = gridY + pos.y % 50;
+
+        cursor.style.left = plusOffsetx + 'px';
+        cursor.style.top = plusOffsety + 'px';
+
 		if (event.clientX === 0 && event.clientY === 0) {
 			return;
 		}
 
 		if (!mouseDown) {
+            cursor.style.display = 'block';
 			return;
 		}
 
@@ -284,6 +350,8 @@
 		pos.y = pos.y + event.movementY;
 	}}
 ></div>
+
+<div class="cursor select-none pointer-events-none" bind:this={cursor}></div>
 
 <style>
 	.toolbar {

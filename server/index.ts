@@ -78,6 +78,13 @@ io.on('connection', (socket) => {
         try {
             const { x, y, color } = data;
 
+            // Make sure the color is a valid hex color without a # in front and can have uppercase or lowercase letters
+            if (!color.match(/^[0-9a-fA-F]{6}$/)) {
+                socket.emit('error', 'Invalid color, make sure it dosent have a # in front and is a valid hex color (uppercase or lowercase letters). Color input: ' + color);
+                return;
+            }
+
+
             const areaKey = `area:${Math.floor(x / 8)}:${Math.floor(y / 8)}`;
 
             const area = JSON.parse(await client.get(areaKey));
@@ -90,6 +97,8 @@ io.on('connection', (socket) => {
             area[x % 8][y % 8] = color;
 
             await client.set(areaKey, JSON.stringify(area));
+
+            console.log('Pixel set at', x, y, 'with color', color);
 
             io.to(`area_${Math.floor(x / 8)}_${Math.floor(y / 8)}`).emit('pixel_updated', { x, y, color });
         } catch (e) {

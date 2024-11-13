@@ -15,8 +15,9 @@
         {#each pixels as pixel_row, rowIndex}
             {#each pixel_row as pixel, colIndex}
                 {#if pixel}
-                    <div    class="pixel absolute" 
-                            style=" background-color: {pixel};
+                    <div    class="pixel absolute"
+                            id="pixel-{rowIndex + 8 * zone.x}-{colIndex + 8 * zone.y}"
+                            style=" background-color: #{pixel};
                                     top: {((colIndex) * 50)}px;
                                     left: {((rowIndex) * 50)}px;
                     "></div>
