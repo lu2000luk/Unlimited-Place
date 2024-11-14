@@ -88,18 +88,19 @@
         socket.on("pixel_updated", (data) => {
             console.log('Pixel updated at ', data);
 
+			let { zoneX, zoneY } = data;
             let tryPixelElement = document.querySelector(`#pixel-${data.x}-${data.y}`);
 
             if (tryPixelElement) {
                 tryPixelElement.style.backgroundColor = `#${data.color}`;
             } else {
-                deleteArea({ zoneX: Math.floor(data.x / 8), zoneY: Math.floor(data.y / 8) });
-                addArea({ zoneX: Math.floor(data.x / 8), zoneY: Math.floor(data.y / 8) });
+                deleteArea({ zoneX, zoneY });
+                addArea({ zoneX, zoneY });
             }
         });
 
 		socket.on("debug", (data) => {
-			console.log(data);
+			console.log("Debug: ", data);
 		});
 
 		function getEmptyArea() {
@@ -229,7 +230,7 @@
                 clickFunctions = [];
                 clickFunctions.push(setPixel);
 
-                socket.emit('set_pixel', { x: pixelX + zoneX * 8, y: pixelY + zoneY * 8, color: selectedColor.replaceAll("#", "") });
+                socket.emit('set_pixel', { x: pixelX, y: pixelY, color: selectedColor.replaceAll("#", ""), zoneX, zoneY });
 
                 console.log('Pixel set at ', { x: pixelX + zoneX * 8, y: pixelY + zoneY * 8 }, ' in zone ', { x: zoneX, y: zoneY });
             }
@@ -316,7 +317,7 @@
 	}
 </script>
 
-<div class="toolbar z-50 flex items-center gap-2 rounded-lg bg-gray-800 bg-opacity-35 backdrop-blur-sm border-2 p-2 text-white" style="border-color: {selectedColor};">
+<div class="toolbar z-50 flex items-center gap-2 rounded-lg bg-gray-800 bg-opacity-35 backdrop-blur-sm border-4 p-2" style="border-color: {selectedColor};">
     <input type="color" class="rounded w-10 h-10 p-0 m-0 outline-none" bind:value={selectedColor} />
 </div>
 

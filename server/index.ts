@@ -1,3 +1,4 @@
+/* eslint-disable no-compare-neg-zero */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-nocheck
@@ -50,9 +51,18 @@ io.on('connection', (socket) => {
                 y = Math.floor(y / 8);
             }
 
+            let manipulatedX = false;
+            let manipulatedY = false;
+
+            if (x === -1) {x = "-1Fix"; manipulatedX = true};
+            if (y === -1) {y = "-1Fix"; manipulatedY = true};
+
             const key = `area:${x}:${y}`;
 
             const area = await client.get(key);
+
+            if (manipulatedX) x = -1;
+            if (manipulatedY) y = -1;
 
             socket.join(`area_${x}_${y}`);
 
@@ -76,7 +86,7 @@ io.on('connection', (socket) => {
 
     socket.on('set_pixel', async (data) => {
         try {
-            const { x, y, color } = data;
+            const { x, y, color, zoneX, zoneY } = data;
 
             // Make sure the color is a valid hex color without a # in front and can have uppercase or lowercase letters
             if (!color.match(/^[0-9a-fA-F]{6}$/)) {
@@ -85,9 +95,29 @@ io.on('connection', (socket) => {
             }
 
             // Handle negative coordinates for area calculation
-            const areaX = Math.floor(x / 8);
-            const areaY = Math.floor(y / 8);
-            const areaKey = `area:${areaX}:${areaY}`;
+            let areaX = zoneX;
+            let areaY = zoneY;
+
+            let manipulatedX = false;
+            let manipulatedY = false;
+
+            if (areaX === -1) {
+                manipulatedX = true;
+            }
+
+            if (areaY === -1) {
+                manipulatedY = true;
+            };
+
+            if (areaX < 0 && x !== -8) areaX++;
+            if (areaY < 0 && y !== -8) areaY++;
+
+            let keyAreaX = areaX;
+            let keyAreaY = areaY;
+            
+            if (manipulatedX) keyAreaX = "-1Fix";
+            if (manipulatedY) keyAreaY = "-1Fix";
+            const areaKey = `area:${keyAreaX}:${keyAreaY}`;
 
             const area = JSON.parse(await client.get(areaKey));
 
@@ -99,11 +129,11 @@ io.on('connection', (socket) => {
 
             await client.set(areaKey, JSON.stringify(area));
 
-            console.log('Pixel set at', x, y, 'with color', color);
+            console.log('Pixel set at', x, y, 'with color', color, 'in area', areaX, areaY);
 
-            io.to(`area_${areaX}_${areaY}`).emit('pixel_updated', { x, y, color });
+            io.to(`area_${areaX}_${areaY}`).emit('pixel_updated', { x: x + areaX * 8, y: y + areaY * 8, color, zoneX, zoneY });
 
-            socket.emit("debug", { x, y, color, areaX, areaY, pixelX, pixelY, area, areaKey });
+            socket.emit("debug", { x, y, color, areaX, areaY, pixelX, pixelY, area, areaKey, zoneX, zoneY });
         } catch (e) {
             socket.emit('error', 'Failed to set pixel: ' + e + " | Data: " + JSON.stringify(data));
             console.error(e);
@@ -137,6 +167,8 @@ io.on('connection', (socket) => {
             }
 
             socket.join(`area_${x}_${y}`);
+
+            console.log("Making ", socket.id, " join area ", x, y);
         } catch (e) {
             socket.emit('error', 'Failed to join area');
         }
