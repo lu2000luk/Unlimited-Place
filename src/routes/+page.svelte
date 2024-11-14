@@ -310,7 +310,7 @@
 
 	function onmouseup(event) {
 		mouseDown = false;
-        if (Date.now() - mouseDownSince < 800) {
+        if (Date.now() - mouseDownSince < 2000) {
             console.log('Click');
             clickFunctions.forEach((func) => func());
         }

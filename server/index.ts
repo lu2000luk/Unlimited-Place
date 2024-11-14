@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /* eslint-disable no-compare-neg-zero */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -109,8 +110,11 @@ io.on('connection', (socket) => {
                 manipulatedY = true;
             };
 
-            if (areaX < 0 && x !== -8 && x !== 0) areaX++;
-            if (areaY < 0 && y !== -8 && y !== 0) areaY++;
+            let renderAreaX = areaX;
+            let renderAreaY = areaY
+
+            if (areaX < 0 && x !== -8 && x !== 0) renderAreaX++;
+            if (areaY < 0 && y !== -8 && y !== 0) renderAreaY++;
 
             let keyAreaX = areaX;
             let keyAreaY = areaY;
@@ -131,9 +135,9 @@ io.on('connection', (socket) => {
 
             console.log('Pixel set at', x, y, 'with color', color, 'in area', areaX, areaY);
 
-            io.to(`area_${areaX}_${areaY}`).emit('pixel_updated', { x: x + areaX * 8, y: y + areaY * 8, color, zoneX, zoneY });
+            io.to(`area_${areaX}_${areaY}`).emit('pixel_updated', { x: x + renderAreaX * 8, y: y + renderAreaY * 8, color, zoneX, zoneY });
 
-            socket.emit("debug", { x, y, color, areaX, areaY, pixelX, pixelY, area, areaKey, zoneX, zoneY });
+            socket.emit("debug", { x, y, color, areaX, areaY, pixelX, pixelY, area, areaKey, zoneX, zoneY, manipulatedX, manipulatedY, keyAreaX, keyAreaY });
         } catch (e) {
             socket.emit('error', 'Failed to set pixel: ' + e + " | Data: " + JSON.stringify(data));
             console.error(e);
