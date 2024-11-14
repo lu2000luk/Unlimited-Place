@@ -109,8 +109,8 @@ io.on('connection', (socket) => {
                 manipulatedY = true;
             };
 
-            if (areaX < 0 && x !== -8) areaX++;
-            if (areaY < 0 && y !== -8) areaY++;
+            if (areaX < 0 && x !== -8 && x !== 0) areaX++;
+            if (areaY < 0 && y !== -8 && y !== 0) areaY++;
 
             let keyAreaX = areaX;
             let keyAreaY = areaY;
