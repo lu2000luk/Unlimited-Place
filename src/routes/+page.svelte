@@ -8,8 +8,9 @@
 	import { writable } from 'svelte/store';
 	import { parse } from 'svelte/compiler';
 	import { on } from 'svelte/events';
+	import { env } from '$env/dynamic/public'
 
-	const backendUrl = 'http://localhost:3000';
+	const backendUrl = env.BACKEND_URL;
 
 	let viewportWidth = 0;
 	let viewportHeight = 0;

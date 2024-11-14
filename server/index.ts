@@ -13,15 +13,18 @@ import { stat } from 'node:fs';
 import { createClient } from 'redis';
 import cors from 'cors';
 
+import "dotenv/config";
+
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
-      origin: "*",
+      origin: process.env["ALLOWED_ORIGINS"] || "*",
     }
   });
 const client = createClient({
-    url: 'redis://localhost:32770'
+    url: process.env["REDIS_URL"] || 'redis://localhost:32770',
+    password: process.env["REDIS_PASSWORD"] || undefined
 });
 
 app.use(cors());
