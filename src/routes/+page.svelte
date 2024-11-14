@@ -317,6 +317,13 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Unlimited Place</title>
+	<meta name="description" content="Unlimited Place, r/Place but unlimited, the grid is infinite, there is no delay and the color rage is also infinite (limited my the RGB colors but lets say its infinite)" />
+	<meta name="keywords" content="Unlimited Place" />
+	<meta name="author" content="lu2000luk" />
+</svelte:head>
+
 <div class="toolbar z-50 flex items-center gap-2 rounded-lg bg-gray-800 bg-opacity-35 backdrop-blur-sm border-4 p-2" style="border-color: {selectedColor};">
     <input type="color" class="rounded w-10 h-10 p-0 m-0 outline-none" bind:value={selectedColor} />
 </div>
