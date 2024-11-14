@@ -88,32 +88,7 @@ io.on('connection', (socket) => {
 
             const area = JSON.parse(await client.get(areaKey));
 
-            if (area && Array.isArray(area) && area[x % 8] && Array.isArray(area[x % 8])) {
-                area[x % 8][y % 8] = color;
-            } else {
-                if (!area) {
-                    socket.emit('error', 'Area is null');
-                    return;
-                }
-
-                if (!Array.isArray(area)) {
-                    socket.emit('error', 'Area is not an array');
-                    return;
-                }
-
-                if (!area[x % 8]) {
-                    socket.emit('error', 'Area x is null');
-                    return;
-                }
-
-                if (!Array.isArray(area[x % 8])) {
-                    socket.emit('error', 'Area x is not an array');
-                    return;
-                }
-
-                socket.emit('error', 'Unknown error while setting pixel | Data: ' + JSON.stringify(data));
-                return;
-            }
+            area[x % 8][y % 8] = color;
 
             await client.set(areaKey, JSON.stringify(area));
 
