@@ -84,17 +84,26 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            const areaKey = `area:${Math.floor(x / 8)}:${Math.floor(y / 8)}`;
+            // Handle negative coordinates for area calculation
+            const areaX = Math.floor(x / 8);
+            const areaY = Math.floor(y / 8);
+            const areaKey = `area:${areaX}:${areaY}`;
 
             const area = JSON.parse(await client.get(areaKey));
 
-            area[x % 8][y % 8] = color;
+            // Handle negative coordinates for pixel position within area
+            const pixelX = ((x % 8) + 8) % 8;
+            const pixelY = ((y % 8) + 8) % 8;
+
+            area[pixelX][pixelY] = color;
 
             await client.set(areaKey, JSON.stringify(area));
 
             console.log('Pixel set at', x, y, 'with color', color);
 
-            io.to(`area_${Math.floor(x / 8)}_${Math.floor(y / 8)}`).emit('pixel_updated', { x, y, color });
+            io.to(`area_${areaX}_${areaY}`).emit('pixel_updated', { x, y, color });
+
+            socket.emit("debug", { x, y, color, areaX, areaY, pixelX, pixelY, area, areaKey });
         } catch (e) {
             socket.emit('error', 'Failed to set pixel: ' + e + " | Data: " + JSON.stringify(data));
             console.error(e);

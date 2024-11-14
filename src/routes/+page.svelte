@@ -35,6 +35,10 @@
 
 		socket.on('connect', () => {
 			console.log('Connected to server');
+
+			Object.keys(zones).forEach((zone) => {
+				socket.emit("join_area", { x: zone.split("_")[0], y: zone.split("_")[1], zone: true });
+			});
 		});
 
 		socket.on('disconnect', () => {
@@ -93,6 +97,10 @@
                 addArea({ zoneX: Math.floor(data.x / 8), zoneY: Math.floor(data.y / 8) });
             }
         });
+
+		socket.on("debug", (data) => {
+			console.log(data);
+		});
 
 		function getEmptyArea() {
 			return new Array(8).fill(null).map(() => new Array(8).fill(null));
