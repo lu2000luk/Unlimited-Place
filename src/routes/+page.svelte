@@ -10,7 +10,7 @@
 	import { on } from 'svelte/events';
 	import { env } from '$env/dynamic/public'
 
-	const backendUrl = env.BACKEND_URL;
+	const backendUrl = env.BACKEND_URL || "http://localhost:3000/";
 
 	let viewportWidth = 0;
 	let viewportHeight = 0;
