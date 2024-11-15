@@ -8,9 +8,8 @@
 	import { writable } from 'svelte/store';
 	import { parse } from 'svelte/compiler';
 	import { on } from 'svelte/events';
-	import { env } from '$env/dynamic/public'
 
-	const backendUrl = env.BACKEND_URL || "http://localhost:3000/";
+	const backendUrl = "https://unlimitedserver.lu2000luk.hackclub.app/";
 
 	let viewportWidth = 0;
 	let viewportHeight = 0;
