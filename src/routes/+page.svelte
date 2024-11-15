@@ -9,7 +9,7 @@
 	import { parse } from 'svelte/compiler';
 	import { on } from 'svelte/events';
 
-	const backendUrl = "https://unlimitedserver.lu2000luk.hackclub.app/";
+	const backendUrl = "unlimitedserver.lu2000luk.hackclub.app";
 
 	let viewportWidth = 0;
 	let viewportHeight = 0;
