@@ -319,7 +319,7 @@
 
 <svelte:head>
 	<title>Unlimited Place</title>
-	<meta name="description" content="Unlimited Place, r/Place but unlimited, the grid is infinite, there is no delay and the color rage is also infinite (limited my the RGB colors but lets say its infinite)" />
+	<meta name="description" content="Unlimited Place, r/Place but unlimited, the grid is infinite, there is no delay and the color rage is also infinite (limited by the integer limit but lets say its infinite)" />
 	<meta name="keywords" content="Unlimited Place" />
 	<meta name="author" content="lu2000luk" />
 </svelte:head>
